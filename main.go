@@ -34,6 +34,13 @@ func uploadHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Error: "File type not allowed"})
 		return
 	}
+		// Get the selected folder from the request
+		selectedFolder := c.PostForm("folder")
+		if selectedFolder == "" {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "No folder selected"})
+			return
+	}
+
 	// Save the file in the project directory
 	dst := filepath.Join("uploads", filename)
 	err = c.SaveUploadedFile(file, dst)
