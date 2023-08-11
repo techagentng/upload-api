@@ -3,6 +3,7 @@ package main
 import (
   "net/http"
   "github.com/gin-gonic/gin"
+  "github.com/gin-contrib/cors"
   _"fmt"
 	_"net/http"
 	"net/url"
@@ -76,6 +77,7 @@ type ErrorResponse struct {
 
 func main() {
 r := gin.Default()
+r.Use(cors.Default())
 r.ForwardedByClientIP = true
 r.SetTrustedProxies([]string{"127.0.0.1"})
 
