@@ -10,7 +10,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
-
+type FileWithTime struct {
+    FileName       string    `json:"fileName"`
+    CreationTime   time.Time `json:"creationTime"`
+    ModificationTime time.Time `json:"modificationTime"`
+}
 // Define a custom response struct
 type FileUploadResponse struct {
     Message     string `json:"message"`
@@ -33,7 +37,7 @@ func uploadHandler(c *gin.Context) {
     }
 
     // Define the absolute path to the "uploads" directory
-    uploadsBasePath := "./"
+    uploadsBasePath := "./uploads"
 
 	    // Define the folder path
 		folderPath := filepath.Join(uploadsBasePath, selectedFolder)
@@ -106,52 +110,103 @@ func downloadHandler(c *gin.Context) {
 	c.File(filepath)
 }
 
-// func fileListHandler(c *gin.Context) {
-//     uploadsBasePath := "./"
-    
-//     files, err := os.ReadDir(uploadsBasePath)
+// func folderListHandler(c *gin.Context) {
+// 	uploadsBasePath := "./uploads"
+//     selectedFolder := c.Param("folderName")
+//     folderPath := filepath.Join(uploadsBasePath, selectedFolder)
+
+// 	fmt.Println("Reading folder:", folderPath)
+//     files, err := os.ReadDir(folderPath)
 //     if err != nil {
+// 		fmt.Println("Error reading folder:", err)
 //         c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to retrieve file list"})
 //         return
 //     }
-    
+
 //     var fileNames []string
 //     for _, file := range files {
 //         if !file.IsDir() {
 //             fileNames = append(fileNames, file.Name())
 //         }
 //     }
-    
+
 //     c.JSON(http.StatusOK, gin.H{"files": fileNames})
 // }
-func fileListHandler(c *gin.Context) {
-	// Retrieve the string parameter
-	selectedFolder := c.PostForm("folder")
-	fmt.Println("Selected folder:", selectedFolder)
 
-	if selectedFolder == "" {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Error: "No folder selected"})
-		return
-	}
+func folderListHandler(c *gin.Context) {
+    uploadsBasePath := "./uploads"
+    selectedFolder := c.Param("folderName")
+    folderPath := filepath.Join(uploadsBasePath, selectedFolder)
 
-    targetFolder := "your-target-folder" // Replace with the folder name you want to list
-
-    targetFolderPath := filepath.Join("./", targetFolder)
-
-    files, err := os.ReadDir(targetFolderPath)
+    fmt.Println("Reading folder:", folderPath)
+    files, err := os.ReadDir(folderPath)
     if err != nil {
+        fmt.Println("Error reading folder:", err)
         c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to retrieve file list"})
         return
     }
 
-    var fileNames []string
+    var fileList []FileWithTime
     for _, file := range files {
         if !file.IsDir() {
-            fileNames = append(fileNames, file.Name())
+            filePath := filepath.Join(folderPath, file.Name())
+
+            fileInfo, err := os.Stat(filePath)
+            if err != nil {
+                fmt.Println("Error getting file info:", err)
+                continue
+            }
+
+            creationTime := fileInfo.ModTime()
+            modificationTime := fileInfo.ModTime()
+
+            fileData := FileWithTime{
+                FileName:         file.Name(),
+                CreationTime:     creationTime,
+                ModificationTime: modificationTime,
+            }
+
+            fileList = append(fileList, fileData)
         }
     }
 
-    c.JSON(http.StatusOK, gin.H{"files": fileNames})
+    c.JSON(http.StatusOK, gin.H{"files": fileList})
+}
+
+func fileListHandler(c *gin.Context) {
+    uploadsBasePath := "./uploads"
+    
+    files, err := os.ReadDir(uploadsBasePath)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to retrieve file list. it does not exist"})
+        return
+    }
+    
+    var fileList []FileWithTime
+    for _, file := range files {
+        if !file.IsDir() {
+            filePath := filepath.Join(uploadsBasePath, file.Name())
+
+            fileInfo, err := os.Stat(filePath)
+            if err != nil {
+                fmt.Println("Error getting file info:", err)
+                continue
+            }
+
+            creationTime := fileInfo.ModTime()
+            modificationTime := fileInfo.ModTime()
+
+            fileData := FileWithTime{
+                FileName:         file.Name(),
+                CreationTime:     creationTime,
+                ModificationTime: modificationTime,
+            }
+
+            fileList = append(fileList, fileData)
+        }
+    }
+    
+    c.JSON(http.StatusOK, gin.H{"files": fileList})
 }
 
 type ErrorResponse struct {
@@ -173,8 +228,12 @@ func main() {
 	// Upload endpoint
 	r.GET("/files", fileListHandler)
 
+	// folderListHandler endpoint
+	r.GET("/folders/:folderName/filelist", folderListHandler)
 	// Download endpoint
 	r.GET("/download/:filename", downloadHandler)
+
+	///api/folder/${folderName}/files
 
 	r.Run(":8080")
 }
