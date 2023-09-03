@@ -12,7 +12,7 @@ import (
 )
 type FileWithTime struct {
     FileName       string    `json:"fileName"`
-    CreationTime   time.Time `json:"creationTime"`
+    DateCreated   time.Time `json:"dateCreated"`
     ModificationTime time.Time `json:"modificationTime"`
 }
 // Define a custom response struct
@@ -80,6 +80,15 @@ func uploadHandler(c *gin.Context) {
     for _, file := range files {
         // Save the uploaded file to the specified path
         dst := filepath.Join(folderPath, file.Filename)
+		
+		_, err := os.Stat(dst)
+        if err == nil {
+            // File already exists, handle the error
+            fmt.Println("File already exists:", file.Filename)
+            c.JSON(http.StatusBadRequest, ErrorResponse{Error: "File already exists"})
+            return
+        }
+
         if err := c.SaveUploadedFile(file, dst); err != nil {
             fmt.Println("Failed to save file:", err)
             c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to save file"})
@@ -110,29 +119,6 @@ func downloadHandler(c *gin.Context) {
 	c.File(filepath)
 }
 
-// func folderListHandler(c *gin.Context) {
-// 	uploadsBasePath := "./uploads"
-//     selectedFolder := c.Param("folderName")
-//     folderPath := filepath.Join(uploadsBasePath, selectedFolder)
-
-// 	fmt.Println("Reading folder:", folderPath)
-//     files, err := os.ReadDir(folderPath)
-//     if err != nil {
-// 		fmt.Println("Error reading folder:", err)
-//         c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to retrieve file list"})
-//         return
-//     }
-
-//     var fileNames []string
-//     for _, file := range files {
-//         if !file.IsDir() {
-//             fileNames = append(fileNames, file.Name())
-//         }
-//     }
-
-//     c.JSON(http.StatusOK, gin.H{"files": fileNames})
-// }
-
 func folderListHandler(c *gin.Context) {
     uploadsBasePath := "./uploads"
     selectedFolder := c.Param("folderName")
@@ -142,7 +128,7 @@ func folderListHandler(c *gin.Context) {
     files, err := os.ReadDir(folderPath)
     if err != nil {
         fmt.Println("Error reading folder:", err)
-        c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to retrieve file list"})
+        c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "No file or folder created"})
         return
     }
 
@@ -157,12 +143,12 @@ func folderListHandler(c *gin.Context) {
                 continue
             }
 
-            creationTime := fileInfo.ModTime()
+            dateCreated := fileInfo.ModTime()
             modificationTime := fileInfo.ModTime()
 
             fileData := FileWithTime{
                 FileName:         file.Name(),
-                CreationTime:     creationTime,
+                DateCreated:     dateCreated,
                 ModificationTime: modificationTime,
             }
 
@@ -193,12 +179,12 @@ func fileListHandler(c *gin.Context) {
                 continue
             }
 
-            creationTime := fileInfo.ModTime()
+            dateCreated := fileInfo.ModTime()
             modificationTime := fileInfo.ModTime()
 
             fileData := FileWithTime{
                 FileName:         file.Name(),
-                CreationTime:     creationTime,
+                DateCreated:     dateCreated,
                 ModificationTime: modificationTime,
             }
 
@@ -207,6 +193,22 @@ func fileListHandler(c *gin.Context) {
     }
     
     c.JSON(http.StatusOK, gin.H{"files": fileList})
+}
+
+func deleteFileHandler(c *gin.Context) {
+	fmt.Println("called")
+    folderName := c.Param("folderName")
+    fileName := c.Param("fileName")
+    filePath := filepath.Join("./uploads", folderName, fileName)
+    
+    err := os.Remove(filePath)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete file"})
+        return
+    }
+    
+    c.JSON(http.StatusOK, gin.H{"message": "File deleted successfully"})
 }
 
 type ErrorResponse struct {
@@ -234,6 +236,8 @@ func main() {
 	r.GET("/download/:filename", downloadHandler)
 
 	///api/folder/${folderName}/files
+
+	r.DELETE("/delete/:folderName/:fileName", deleteFileHandler)
 
 	r.Run(":8080")
 }
