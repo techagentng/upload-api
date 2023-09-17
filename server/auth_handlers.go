@@ -96,6 +96,9 @@ func GetValuesFromContext(c *gin.Context) (string, *models.User, *errors.Error) 
 	var tokenExists, userExists bool
 
 	if tokenI, tokenExists = c.Get("access_token"); !tokenExists {
+
+		fmt.Println("called 404")
+
 		return "", nil, errors.New("forbidden", http.StatusForbidden)
 	}
 	if userI, userExists = c.Get("user"); !userExists {

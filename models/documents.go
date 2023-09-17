@@ -16,21 +16,21 @@ import "time"
 
 type Document struct {
 	Model
-	FileName           string `json:"filename" binding:"required,min=2"`
-	Folder        string    `json:"folder" binding:"required"`
-	DocumentType          string `json:"document_type"`
-	DocumentNumber    string `json:"document_number"`
-	Department       string `json:"department"`
-	Division       string `json:"division"`
-	DocClass      string `json:"docclass"`
-	DocumentAuthor       string `json:"document_author"`
-	DocumentUploadDate       time.Time `json:"document_upload_date"`
-	DateCreated       string `json:"date_created"`
-	DocumentUploadNumber       string `json:"document_upload_number"`
-	UploaderName       string `json:"uploader_name"`
-	UserID                 uint 
-	
+	FileName           string    `json:"filename" binding:"required,min=2"`
+	Folder             string    `json:"folder" binding:"required" gorm:"unique;default:null"`
+	DocumentType       string    `json:"document_type"`
+	DocumentNumber     string    `json:"document_number"`
+	Department         string    `json:"department"`
+	Division           string    `json:"division"`
+	DocClass           string    `json:"docclass"`
+	DocumentAuthor     string    `json:"document_author"`
+	DocumentUploadDate time.Time `json:"document_upload_date"`
+	DateCreated        string    `json:"date_created"`
+	DocumentUploadNumber string   `json:"document_upload_number"`
+	UploaderName       string    `json:"uploader_name"`
+	UserID             uint
 }
+
 // type DocumentResponse struct {
 // 	ID          uint   `json:"id"`
 // 	Name        string `json:"name"`
@@ -44,7 +44,7 @@ type DocumentRequest struct {
 	DocumentNumber string `json:"document_number"`
     Department    string    `json:"department"`
     Division      string    `json:"division"`
-    Document      string    `json:"docclass"`
+    Docclass      string    `json:"docclass"`
 	DocumentUploadDate    string `json:"document_upload_date"`
 	UploaderName string `json:"uploader_name"`
 	UserID        uint      `json:"user_id"`

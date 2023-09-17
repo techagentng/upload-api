@@ -61,16 +61,12 @@ func (a *authService) SignupUser(user *models.User) (*models.User, *apiError.Err
 		return nil, apiError.New("phone already exist", http.StatusBadRequest)
 	}
 
-	// user.HashedPassword, err = GenerateHashPassword(user.Password)
-	// if err != nil {
-	// 	log.Printf("error generating password hash: %v", err.Error())
-	// 	return nil, apiError.New("internal server error", http.StatusInternalServerError)
-	// }
-	user.HashedPassword = user.Password 
+	user.HashedPassword, err = GenerateHashPassword(user.Password)
 	if err != nil {
 		log.Printf("error generating password hash: %v", err.Error())
 		return nil, apiError.New("internal server error", http.StatusInternalServerError)
 	}
+	
 	// token, err := jwt.GenerateToken(user.Email, a.Config.JWTSecret)
 	// if err != nil {
 	// 	return nil, apiError.New("internal server error", http.StatusInternalServerError)
@@ -126,9 +122,11 @@ func (a *authService) LoginUser(loginRequest *models.LoginRequest) (*models.Logi
 		return nil, apiError.New("email not verified", http.StatusUnauthorized)
 	}
 
-	// if err := foundUser.VerifyPassword(loginRequest.Password); err != nil {
+	// if err := foundUser.VerifyPassword(loginRequest.Password); err != "" {
+	// 	fmt.Println("herre")
 	// 	return nil, apiError.ErrInvalidPassword
 	// }
+
 
 	accessToken, err := jwt.GenerateToken(foundUser.Email, a.Config.JWTSecret)
 	if err != nil {

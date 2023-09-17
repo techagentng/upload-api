@@ -59,23 +59,21 @@ func saveUploadedFile(c *gin.Context, fileHeader *multipart.FileHeader, folderPa
 func (s *Server) handleFileUpload() gin.HandlerFunc {
     return func(c *gin.Context) {
         var uploadRequest models.DocumentRequest
-    
-        // if err := decode(c, &uploadRequest); err != nil {
-        //     log.Println("called eof")
-		// 	response.JSON(c, "", http.StatusBadRequest, nil, err)
+    	// 	_, user, err := GetValuesFromContext(c)
+		// if err != nil {
+		// 	err.Respond(c)
 		// 	return
 		// }
-        // if err := c.ShouldBindBodyWith(&uploadRequest, binding.JSON); err != nil {
-        //     c.JSON(http.StatusBadRequest, err)
-        //     return
-        // }
+		// uploadRequestUserId := user.ID
         
         uploadRequest.Filename = c.PostForm("filename")
         uploadRequest.DocumentType = c.PostForm("doctype")
         uploadRequest.Folder= c.PostForm("folder")
-        uploadRequest.DocumentNumber= c.PostForm("docnumber")
+        uploadRequest.DocumentNumber= concatenateString(c.PostForm("doctype"))
         uploadRequest.Department = c.PostForm("department")
         uploadRequest.Division = c.PostForm("division")
+        uploadRequest.Docclass = c.PostForm("docclass")
+        // uploadRequest.UserID = uploadRequestUserId
     
            // Validate the request datavalidate
            v := validator.New()
@@ -90,8 +88,7 @@ func (s *Server) handleFileUpload() gin.HandlerFunc {
             return
         }
 
-        uploadsBasePath := "./uploads"
-        folderPath := filepath.Join(uploadsBasePath, selectedFolder)
+        folderPath := filepath.Join("./uploads", selectedFolder)
 
         if err := os.MkdirAll(folderPath, 0755); err != nil {
             fmt.Println("Error creating subdirectory:", err)
