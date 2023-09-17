@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+    "log"
 	"net/http"
 	_ "net/url"
 	"os"
@@ -9,6 +10,10 @@ import (
 	"time"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+    "routepayfs.com/upload/config"
+    "routepayfs.com/upload/db"
+    "routepayfs.com/upload/services"
+    "routepayfs.com/upload/server"
 )
 type FileWithTime struct {
     FileName       string    `json:"fileName"`
@@ -24,88 +29,88 @@ type FileUploadResponse struct {
     Folder      string `json:"folder"`
 }
 
-func uploadHandler(c *gin.Context) {
-    fmt.Println("uploadHandler called")
+// func uploadHandler(c *gin.Context) {
+//     fmt.Println("uploadHandler called")
 
-    // Retrieve the string parameter
-    selectedFolder := c.PostForm("folder")
-    fmt.Println("Selected folder:", selectedFolder)
+//     // Retrieve the string parameter
+//     selectedFolder := c.PostForm("folder")
+//     fmt.Println("Selected folder:", selectedFolder)
 
-    if selectedFolder == "" {
-        c.JSON(http.StatusBadRequest, ErrorResponse{Error: "No folder selected"})
-        return
-    }
+//     if selectedFolder == "" {
+//         c.JSON(http.StatusBadRequest, ErrorResponse{Error: "No folder selected"})
+//         return
+//     }
 
-    // Define the absolute path to the "uploads" directory
-    uploadsBasePath := "./uploads"
+//     // Define the absolute path to the "uploads" directory
+//     uploadsBasePath := "./uploads"
 
-	    // Define the folder path
-		folderPath := filepath.Join(uploadsBasePath, selectedFolder)
+// 	    // Define the folder path
+// 		folderPath := filepath.Join(uploadsBasePath, selectedFolder)
 
-    // Create the "uploads" folder if it doesn't exist
-    if err := os.MkdirAll(uploadsBasePath, 0755); err != nil {
-        fmt.Println("Error creating subdirectory:", err)
-        c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to create subdirectory"})
-        return
-    }
+//     // Create the "uploads" folder if it doesn't exist
+//     if err := os.MkdirAll(uploadsBasePath, 0755); err != nil {
+//         fmt.Println("Error creating subdirectory:", err)
+//         c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to create subdirectory"})
+//         return
+//     }
 
-    // Retrieve the multipart form
-    form, err := c.MultipartForm()
+//     // Retrieve the multipart form
+//     form, err := c.MultipartForm()
 
-    if err != nil {
-        c.JSON(http.StatusBadRequest, nil)
-        return
-    }
+//     if err != nil {
+//         c.JSON(http.StatusBadRequest, nil)
+//         return
+//     }
 
-    files := form.File["file"]
-    selectedFolder = form.Value["folder"][0] // Retrieve the selected folder
-    fmt.Println("formFfile", files)
-    fmt.Println(c.Request.MultipartForm.File)
-    var uploadedFiles []string // To store the uploaded file names
-    fmt.Println("Entering loop")
+//     files := form.File["file"]
+//     selectedFolder = form.Value["folder"][0] // Retrieve the selected folder
+//     fmt.Println("formFfile", files)
+//     fmt.Println(c.Request.MultipartForm.File)
+//     var uploadedFiles []string // To store the uploaded file names
+//     fmt.Println("Entering loop")
 
-    // Check if no files were uploaded, and create an empty PDF if necessary
-    if len(files) == 0 {
-        emptyPDFPath := filepath.Join(folderPath, selectedFolder+".pdf")
-        emptyPDF, err := os.Create(emptyPDFPath)
-        if err != nil {
-            fmt.Println("Error creating empty PDF:", err)
-            c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to create empty PDF"})
-            return
-        }
-        emptyPDF.Close()
-        uploadedFiles = append(uploadedFiles, selectedFolder+".pdf")
-    }
+//     // Check if no files were uploaded, and create an empty PDF if necessary
+//     if len(files) == 0 {
+//         emptyPDFPath := filepath.Join(folderPath, selectedFolder+".pdf")
+//         emptyPDF, err := os.Create(emptyPDFPath)
+//         if err != nil {
+//             fmt.Println("Error creating empty PDF:", err)
+//             c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to create empty PDF"})
+//             return
+//         }
+//         emptyPDF.Close()
+//         uploadedFiles = append(uploadedFiles, selectedFolder+".pdf")
+//     }
 
-    for _, file := range files {
-        // Save the uploaded file to the specified path
-        dst := filepath.Join(folderPath, file.Filename)
+//     for _, file := range files {
+//         // Save the uploaded file to the specified path
+//         dst := filepath.Join(folderPath, file.Filename)
 		
-		_, err := os.Stat(dst)
-        if err == nil {
-            // File already exists, handle the error
-            fmt.Println("File already exists:", file.Filename)
-            c.JSON(http.StatusBadRequest, ErrorResponse{Error: "File already exists"})
-            return
-        }
+// 		_, err := os.Stat(dst)
+//         if err == nil {
+//             // File already exists, handle the error
+//             fmt.Println("File already exists:", file.Filename)
+//             c.JSON(http.StatusBadRequest, ErrorResponse{Error: "File already exists"})
+//             return
+//         }
 
-        if err := c.SaveUploadedFile(file, dst); err != nil {
-            fmt.Println("Failed to save file:", err)
-            c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to save file"})
-            return
-        }
-        // fmt.Println("File uploaded:", file)
-        fmt.Println("uploads aloop", uploadedFiles)
+//         if err := c.SaveUploadedFile(file, dst); err != nil {
+//             fmt.Println("Failed to save file:", err)
+//             c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to save file"})
+//             return
+//         }
+//         // fmt.Println("File uploaded:", file)
+//         fmt.Println("uploads aloop", uploadedFiles)
 
-        uploadedFiles = append(uploadedFiles, file.Filename) // Store the file name
-    }
-	submissionTime := time.Now()
-    c.JSON(http.StatusOK, gin.H{
-		"message": "Files uploaded successfully", 
-		"files": uploadedFiles,
-		"submissionTime": submissionTime.Format(time.RFC3339),
-	})
-}
+//         uploadedFiles = append(uploadedFiles, file.Filename) // Store the file name
+//     }
+// 	submissionTime := time.Now()
+//     c.JSON(http.StatusOK, gin.H{
+// 		"message": "Files uploaded successfully", 
+// 		"files": uploadedFiles,
+// 		"submissionTime": submissionTime.Format(time.RFC3339),
+// 	})
+// }
 
 func downloadHandler(c *gin.Context) {
 	filename := c.Param("filename")
@@ -216,6 +221,23 @@ type ErrorResponse struct {
 }
 
 func main() {
+    conf, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+    gormDB := db.GetDB(conf)
+    authRepo := db.NewAuthRepo(gormDB)
+    authService := services.NewAuthService(authRepo, conf)
+    documentRepo := db.NewDocumentRepo(gormDB)
+    documentService := services.NewDocumentService(documentRepo, conf)
+
+    s := &server.Server{
+		Config:                   conf,
+		AuthRepository:           authRepo,
+		AuthService:              authService,
+        DocumentService:         documentService,
+	}
 	r := gin.Default()
 	r.Use(cors.Default())
 	// r.ForwardedByClientIP = true
@@ -224,20 +246,6 @@ func main() {
 	// Serve uploaded files
 	r.Static("/uploads", "./uploads")
 
-	// Upload endpoint
-	r.POST("/upload", uploadHandler)
-
-	// Upload endpoint
-	r.GET("/files", fileListHandler)
-
-	// folderListHandler endpoint
-	r.GET("/folders/:folderName/filelist", folderListHandler)
-	// Download endpoint
-	r.GET("/download/:filename", downloadHandler)
-
-	///api/folder/${folderName}/files
-
-	r.DELETE("/delete/:folderName/:fileName", deleteFileHandler)
-
-	r.Run(":8080")
+	// r.Run(":8080")
+    s.Start()
 }
