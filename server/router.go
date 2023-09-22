@@ -29,7 +29,7 @@ func (s *Server) defineRoutes(router *gin.Engine) {
 	// Download endpoint
 	// apirouter.GET("/download/:filename", s.handleDownloadDocument())
 	
-	apirouter.DELETE("/delete/:folderName/:fileName", s.handleDeleteDocument())
+	apirouter.DELETE("/delete/:folder/:fileName", s.handleDeleteDocument())
 	// apirouter.GET("/fb/auth", s.handleFBLogin())
 	// apirouter.GET("fb/callback", s.fbCallbackHandler())
 
@@ -49,11 +49,12 @@ func (s *Server) defineRoutes(router *gin.Engine) {
 	// authorized.DELETE("/users", s.handleDeleteUserByEmail())
 	authorized.PUT("/me/update", s.handleUpdateUserDetails())
 	authorized.GET("/me", s.handleShowProfile())
-	
+	apirouter.DELETE("/documents/:folderName/:fileName", s.handleDeleteDocument())
+	apirouter.GET("/download/:filename", s.handleDownloadDocument())
 
 	// authorized.POST("/user/medications", s.handleCreateMedication())
 	// authorized.GET("/user/medications/:id", s.handleGetMedDetail())
-	// authorized.GET("/user/medications", s.handleGetAllMedications())
+	apirouter.GET("/documents", s.handleGetAllDocuments())
 	// authorized.PUT("/user/medications/:medicationID", s.handleUpdateMedication())
 	// authorized.GET("/user/medications/next", s.handleGetNextMedication())
 	// authorized.GET("/user/medications/search", s.handleFindMedication())

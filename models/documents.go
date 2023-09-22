@@ -17,7 +17,7 @@ import "time"
 type Document struct {
 	Model
 	FileName           string    `json:"filename" binding:"required,min=2"`
-	Folder             string    `json:"folder" binding:"required" gorm:"unique;default:null"`
+	Folder             string    `json:"folder" binding:"required" gorm:"default:null"`
 	DocumentType       string    `json:"document_type"`
 	DocumentNumber     string    `json:"document_number"`
 	Department         string    `json:"department"`
@@ -30,13 +30,6 @@ type Document struct {
 	UploaderName       string    `json:"uploader_name"`
 	UserID             uint
 }
-
-// type DocumentResponse struct {
-// 	ID          uint   `json:"id"`
-// 	Name        string `json:"name"`
-// 	PhoneNumber string `json:"phone_number"`
-// 	Email       string `json:"email"`
-// }
 type DocumentRequest struct {
 	Filename       string `json:"filename"`
     Folder        string    `json:"folder"`
