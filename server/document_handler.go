@@ -4,27 +4,22 @@ import (
 	// "encoding/json"
 	_ "encoding/json"
 	"fmt"
-	_"log"
-
-	// "log"
-
-	// "go/doc"
-	// "log"
-
-	// "log"
+	"log"
+	_ "log"
 	"math/rand"
 	_ "math/rand"
 	"mime/multipart"
+
+	// "mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/google/uuid"
-
-	// "github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	_ "github.com/google/uuid"
 	_ "routepayfs.com/upload/errors"
 	"routepayfs.com/upload/models"
 	"routepayfs.com/upload/server/response"
@@ -38,6 +33,31 @@ type ErrorResponse struct {
     Error string `json:"error"`
 }
 
+type Folder struct {
+	ID   uint
+	Name string
+}
+
+
+var folderMap = map[string]uint{
+	"NDPR": 1,
+	"PCIDSS": 2,
+    "ISO-27001": 3,
+    "Compliance": 4,
+    "Organogram": 5,
+    "SLA": 6,
+    "TAT": 7,
+    "culture": 8,
+    "Information security management": 9,
+	// Add more folder mappings as needed
+}
+// func getFolderID(folderName string) (uint, error) {
+// 	folderID, ok := folderMap[folderName]
+// 	if !ok {
+// 		return 0, fmt.Errorf("folder not found")
+// 	}
+// 	return folderID, nil
+// }
 func saveUploadedFile(c *gin.Context, fileHeader *multipart.FileHeader, folderPath string) error {
     dst := filepath.Join(folderPath, fileHeader.Filename)
 
@@ -156,18 +176,19 @@ func concatenateString(input string) string {
     return result
 }
 
-// func (s *Server) handleDownloadDocument() gin.HandlerFunc {
-// 	return func(c *gin.Context){
-//         filepath := filepath.Join("uploads", filename)
-//         _, err := os.Stat(filepath)
-//         if os.IsNotExist(err) {
-//             c.JSON(http.StatusNotFound, ErrorResponse{Error: "File not found"})
-//             return
-//         }
+func (s *Server) handleDownloadDocument() gin.HandlerFunc {
+	return func(c *gin.Context){
+        filename := c.Param("filename")
+        filepath := filepath.Join("uploads", filename)
+        _, err := os.Stat(filepath)
+        if os.IsNotExist(err) {
+            c.JSON(http.StatusNotFound, ErrorResponse{Error: "File not found"})
+            return
+        }
     
-//         c.File(filepath)
-// 	}
-// }
+        c.File(filepath)
+	}
+}
 
 func (s *Server) handleGetFolderList() gin.HandlerFunc {
 	return func(c *gin.Context){
@@ -219,22 +240,49 @@ func (s *Server) handleFindDocument() gin.HandlerFunc {
 
 func (s *Server) handleDeleteDocument() gin.HandlerFunc {
 	return func(c *gin.Context){
-        fmt.Println("called")
-    folderName := c.Param("folder")
+        log.Println("Delete document called")
+        fmt.Println("Delete document called")
+
+    folderName := c.Param("folderName")
     fileName := c.Param("fileName")
+
+            // Decode the encoded file name
+            encodedFileName := c.Param("fileName")
+            fileName, err := url.QueryUnescape(encodedFileName)
+            if err != nil {
+                c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid file name"})
+                return
+            }
+            
     filePath := filepath.Join("./uploads", folderName, fileName)
-    
-    err := os.Remove(filePath)
+    fmt.Println("Received delete request for folder:", folderName, "and filename:", fileName)
+
+    err = os.Remove(filePath)
 
     if err != nil {
         c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete file"})
         return
     }
     
-    c.JSON(http.StatusOK, gin.H{"message": "File deleted successfully"})
+    c.JSON(http.StatusOK, gin.H{"message": "File deleted successfullyxxx"})
 	}
 }
 
+func (s *Server) handleGetAllDocuments() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// _, user, err := GetValuesFromContext(c)
+		// if err != nil {
+		// 	err.Respond(c)
+		// 	return
+		// }
+		allDocument, err := s.DocumentService.GetAllDocuments()
+		if err != nil {
+			err.Respond(c)
+			return
+		}
+		response.JSON(c, "documents retrieved successfully", http.StatusOK, allDocument, nil)
+	}
+}
 func (s *Server) handleEditDocument() gin.HandlerFunc {
 	return func(c *gin.Context){
 

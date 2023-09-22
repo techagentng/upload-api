@@ -3,11 +3,13 @@ package db
 import (
 	// "fmt"
 
+	"fmt"
 	"log"
 
 	"gorm.io/gorm"
 	// "routepayfs.com/upload/config"
 	"routepayfs.com/upload/errors"
+	_ "routepayfs.com/upload/errors"
 	"routepayfs.com/upload/models"
 	// "github.com/go-co-op/gocron"
 )
@@ -18,7 +20,7 @@ type ErrorResponse struct {
 
 type DocumentRepository interface {
 	CreateDocument(document *models.Document) (*models.Document, error)
-	// GetAllUserDocuments(userID uint) ([]models.DocumentResponse, *errors.Error)
+	GetAllDocuments() ([]models.Document, *errors.Error)
 	// GetAllDocuments() ([]models.DocumentResponse, *errors.Error)
 	// DeleteUserDocument(userID uint) ([]models.DocumentResponse, *errors.Error)
 	// UpdateDocument(request *models.UpdateDocumentRequest, documentID uint, userID uint) *errors.Error
@@ -34,35 +36,25 @@ func NewDocumentRepo(db *GormDB) DocumentRepository {
 }
 
 func (m *documentRepo) CreateDocument(document *models.Document) (*models.Document, error) {
-	err := m.DB.Create(document).Error
-	if err != nil {
-		return nil, &errors.Error{}
-	}
-	log.Println("docccc", document)
-	return document, nil
+    if err := m.DB.Create(document).Error; err != nil {
+        log.Printf("Failed to create document: %v", err)
+        return nil, fmt.Errorf("failed to create document: %v", err)
+    }
+
+    log.Println("Document created:", document)
+    return document, nil
 }
 
-// func (m *medicationService) GetMedicationDetail(id uint, userId uint) (*models.MedicationResponse, *errors.Error) {
-// 	medic, err := m.medicationRepo.GetMedicationDetail(id, userId)
-// 	if err != nil {
-// 		return nil, errors.ErrInternalServerError
-// 	}
-// 	return medic.MedicationToResponse(), nil
-// }
 
-// func (m *medicationService) GetAllMedications(userID uint) ([]models.MedicationResponse, *errors.Error) {
-// 	var medicationResponses []models.MedicationResponse
+func (m *documentRepo) GetAllDocuments() ([]models.Document, *errors.Error) {
+	var documents []models.Document
+	err := m.DB.Find(&documents).Error
+	if err != nil {
+		return nil, nil
+	}
+	return documents, nil
+}
 
-// 	medications, err := m.medicationRepo.GetAllMedications(userID)
-// 	if err != nil {
-// 		return nil, errors.ErrInternalServerError
-// 	}
-
-// 	for _, medication := range medications {
-// 		medicationResponses = append(medicationResponses, *medication.MedicationToResponse())
-// 	}
-// 	return medicationResponses, nil
-// }
 
 // func (m *medicationService) UpdateMedication(request *models.UpdateMedicationRequest, medicationID uint, userID uint) *errors.Error {
 // 	startDate, err := time.Parse(time.RFC3339, request.MedicationStartDate)

@@ -2,18 +2,20 @@ package main
 
 import (
 	"fmt"
-    "log"
+	"log"
 	"net/http"
+	"net/url"
 	_ "net/url"
 	"os"
 	"path/filepath"
 	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-    "routepayfs.com/upload/config"
-    "routepayfs.com/upload/db"
-    "routepayfs.com/upload/services"
-    "routepayfs.com/upload/server"
+	"routepayfs.com/upload/config"
+	"routepayfs.com/upload/db"
+	"routepayfs.com/upload/server"
+	"routepayfs.com/upload/services"
 )
 type FileWithTime struct {
     FileName       string    `json:"fileName"`
@@ -204,9 +206,15 @@ func deleteFileHandler(c *gin.Context) {
 	fmt.Println("called")
     folderName := c.Param("folderName")
     fileName := c.Param("fileName")
-    filePath := filepath.Join("./uploads", folderName, fileName)
+    // Decode the folder name
+	decodedFolderName, err := url.QueryUnescape(fileName)
+	if err != nil {
+		fmt.Println("Error decoding:", err)
+		return
+	}
+    filePath := filepath.Join("./uploads", folderName, decodedFolderName)
     
-    err := os.Remove(filePath)
+    err = os.Remove(filePath)
 
     if err != nil {
         c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete file"})
