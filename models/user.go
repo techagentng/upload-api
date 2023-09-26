@@ -6,9 +6,11 @@ import (
 	"fmt"
 
 	goval "github.com/go-passwd/validator"
+	"golang.org/x/crypto/bcrypt"
 	// "github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+
 	// enTranslations "github.com/go-playground/validator/v10"
 	"github.com/leebenson/conform"
 	// "golang.org/x/crypto/bcrypt"
@@ -99,8 +101,12 @@ type LoginResponse struct {
 // func (u *User) VerifyPassword(password string) error {
 // 	return bcrypt.CompareHashAndPassword([]byte(u.HashedPassword), []byte(password))
 // }
-func (u *User) VerifyPassword(password string) string{
-	return u.HashedPassword
+func (u *User) VerifyPassword(password string) error {
+    err := bcrypt.CompareHashAndPassword([]byte(u.HashedPassword), []byte(password))
+    if err != nil {
+        return err // Passwords do not match
+    }
+    return nil // Passwords match
 }
 // LoginUserToDto responsible for creating a response object for the handleLogin handler
 func (u *User) LoginUserToDto(token string) *LoginResponse {

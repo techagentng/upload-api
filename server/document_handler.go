@@ -79,12 +79,13 @@ func saveUploadedFile(c *gin.Context, fileHeader *multipart.FileHeader, folderPa
 func (s *Server) handleFileUpload() gin.HandlerFunc {
     return func(c *gin.Context) {
         var uploadRequest models.DocumentRequest
-    	// 	_, user, err := GetValuesFromContext(c)
-		// if err != nil {
-		// 	err.Respond(c)
-		// 	return
-		// }
-		// uploadRequestUserId := user.ID
+    		_, user, err := GetValuesFromContext(c)
+		if err != nil {
+			err.Respond(c)
+			return
+		}
+		uploadRequestUserId := user.ID
+        UploaderName := user.Name
         
         uploadRequest.Filename = c.PostForm("filename")
         uploadRequest.DocumentType = c.PostForm("doctype")
@@ -93,7 +94,8 @@ func (s *Server) handleFileUpload() gin.HandlerFunc {
         uploadRequest.Department = c.PostForm("department")
         uploadRequest.Division = c.PostForm("division")
         uploadRequest.Docclass = c.PostForm("docclass")
-        // uploadRequest.UserID = uploadRequestUserId
+        uploadRequest.UserID = uploadRequestUserId
+        uploadRequest.UploaderName = UploaderName
     
            // Validate the request datavalidate
            v := validator.New()
@@ -270,7 +272,7 @@ func (s *Server) handleDeleteDocument() gin.HandlerFunc {
 
 func (s *Server) handleGetAllDocuments() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// _, user, err := GetValuesFromContext(c)
+		// _, _, err := GetValuesFromContext(c)
 		// if err != nil {
 		// 	err.Respond(c)
 		// 	return

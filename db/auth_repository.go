@@ -63,7 +63,7 @@ func (a *authRepo) IsEmailExist(email string) error {
 
 func (a *authRepo) IsPhoneExist(phone string) error {
 	var count int64
-	err := a.DB.Model(&models.User{}).Where("phone_number = ?", phone).Count(&count).Error
+	err := a.DB.Model(&models.User{}).Where("telephone = ?", phone).Count(&count).Error
 	if err != nil {
 		return errors.Wrap(err, "gorm.count error")
 	}
