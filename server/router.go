@@ -29,7 +29,6 @@ func (s *Server) defineRoutes(router *gin.Engine) {
 	// Download endpoint
 	// apirouter.GET("/download/:filename", s.handleDownloadDocument())
 	
-	apirouter.DELETE("/delete/:folder/:fileName", s.handleDeleteDocument())
 	// apirouter.GET("/fb/auth", s.handleFBLogin())
 	// apirouter.GET("fb/callback", s.fbCallbackHandler())
 
@@ -43,7 +42,7 @@ func (s *Server) defineRoutes(router *gin.Engine) {
 	authorized := apirouter.Group("/")
 	authorized.Use(s.Authorize())
 	// Upload endpoint
-	apirouter.POST("/upload", s.handleFileUpload())
+	authorized.POST("/upload", s.handleFileUpload())
 	authorized.GET("/logout", s.handleLogout())
 	authorized.GET("/users", s.handleGetUsers())
 	// authorized.DELETE("/users", s.handleDeleteUserByEmail())
@@ -51,6 +50,7 @@ func (s *Server) defineRoutes(router *gin.Engine) {
 	authorized.GET("/me", s.handleShowProfile())
 	apirouter.DELETE("/documents/:folderName/:fileName", s.handleDeleteDocument())
 	apirouter.GET("/download/:filename", s.handleDownloadDocument())
+	authorized.DELETE("/delete/:folder/:fileName", s.handleDeleteDocument())
 
 	// authorized.POST("/user/medications", s.handleCreateMedication())
 	// authorized.GET("/user/medications/:id", s.handleGetMedDetail())

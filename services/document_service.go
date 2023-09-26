@@ -41,7 +41,6 @@ func (d *documentService) CreateDocument(request *models.DocumentRequest) (*mode
 	    fmt.Println("uploadHandlerService called")
 	
 		document := request.ReqToDocumentModel()
-		
 		response, err := d.UploadDocRepo.CreateDocument(document)   
 		if err != nil {
 			return nil, errors.ErrInternalServerError

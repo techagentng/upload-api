@@ -58,6 +58,7 @@ func (a *authService) SignupUser(user *models.User) (*models.User, *apiError.Err
 
 	err = a.authRepo.IsPhoneExist(user.Telephone)
 	if err != nil {
+			fmt.Println("called 404")
 		return nil, apiError.New("phone already exist", http.StatusBadRequest)
 	}
 
@@ -76,7 +77,7 @@ func (a *authService) SignupUser(user *models.User) (*models.User, *apiError.Err
 	// }
 
 	user.Password = ""
-	user.IsEmailActive = false
+	user.IsEmailActive = true
 	user, err = a.authRepo.CreateUser(user)
 
 	if err != nil {
@@ -122,10 +123,9 @@ func (a *authService) LoginUser(loginRequest *models.LoginRequest) (*models.Logi
 		return nil, apiError.New("email not verified", http.StatusUnauthorized)
 	}
 
-	// if err := foundUser.VerifyPassword(loginRequest.Password); err != "" {
-	// 	fmt.Println("herre")
-	// 	return nil, apiError.ErrInvalidPassword
-	// }
+	if err := foundUser.VerifyPassword(loginRequest.Password); err != nil {
+		return nil, apiError.ErrInvalidPassword
+	}
 
 
 	accessToken, err := jwt.GenerateToken(foundUser.Email, a.Config.JWTSecret)

@@ -22,7 +22,6 @@ func (s *Server) handleSignup() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var user models.User
 		if err := decode(c, &user); err != nil {
-			fmt.Println("called 404")
 			response.JSON(c, "", http.StatusBadRequest, nil, err)
 			return
 		}
