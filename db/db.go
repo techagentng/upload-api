@@ -58,7 +58,17 @@ func getPostgresDB(c *config.Config) *gorm.DB {
 }
 
 func migrate(db *gorm.DB) error {
-	err := db.AutoMigrate(&models.User{}, &models.BlackList{}, &models.Document{})
+	err := db.AutoMigrate(&models.User{}, &models.BlackList{}, &models.Document{}, &models.Folder{ 
+		Foldername: "NDPR",
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+
+	})
+	// folder := models.Folder{
+	// 	Foldername: "MyFolder",
+	// 	CreatedAt:  time.Now(),
+	// 	UpdatedAt:  time.Now(),
+	// }
 	if err != nil {
 		return fmt.Errorf("migrations error: %v", err)
 	}

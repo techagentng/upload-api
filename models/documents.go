@@ -1,7 +1,9 @@
 // I removed the verify password by encryption
 package models
 
-import "time"
+import (
+	"time"
+)
 
 // "errors"
 // "fmt"
@@ -17,7 +19,6 @@ import "time"
 type Document struct {
 	Model
 	FileName           string    `json:"filename" binding:"required,min=2"`
-	Folder             string    `json:"folder" binding:"required" gorm:"default:null"`
 	DocumentType       string    `json:"document_type"`
 	DocumentNumber     string    `json:"document_number"`
 	Department         string    `json:"department"`
@@ -28,11 +29,14 @@ type Document struct {
 	DateCreated        string    `json:"date_created"`
 	DocumentUploadNumber string   `json:"document_upload_number"`
 	UploaderName       string    `json:"uploader_name"`
-	UserID             uint
+	UserID             uint      `json:"user_id"`
+	User               User      `json:"user" gorm:"foreignKey:UserID"`
+	Folder       	   string      `json:"folder" gorm:"foreignKey:Foldername"`
+	Filepath           string    `json:"filepath"`
 }
 type DocumentRequest struct {
 	Filename       string `json:"filename"`
-    Folder        string    `json:"folder"`
+    Foldername        string    `json:"foldername"`
 	DocumentType  string    `json:"doctype"`
 	DocumentNumber string `json:"document_number"`
     Department    string    `json:"department"`
@@ -41,13 +45,13 @@ type DocumentRequest struct {
 	DocumentUploadDate    string `json:"document_upload_date"`
 	UploaderName string `json:"uploader_name"`
 	UserID        uint      `json:"user_id"`
+	Filepath	  string	`json:"filepath"`		
 }
 type DocumentResponse struct {
 	ID                     uint   `json:"id"`
 	CreatedAt              string `json:"created_at"`
 	UpdatedAt              string `json:"updated_at"`
 	Filename       string `json:"filename"`
-    Folder        string    `json:"folder"`
 	DocumentType  string    `json:"doctype"`
 	DocumentNumber string `json:"document_number"`
     Department    string    `json:"department"`
@@ -57,19 +61,22 @@ type DocumentResponse struct {
 	DocumentUploadNumber  string  `json:"documentuploadnumber"`
 	UploaderName string `json:"uploader_name" binding:"required"`
 	UserID        uint      `json:"user_id"`
+	FolderID string   `json:"folder_id"` // Foreign key
+	Folder   Folder `json:"folder" gorm:"foreignKey:FolderID"`
 }
 
 func (m *DocumentRequest) ReqToDocumentModel() *Document {
 	return &Document{
 		FileName: 		 m.Filename,
-		Folder:             m.Folder,
 		DocumentType:       m.DocumentType,
 		DocumentNumber:     m.DocumentNumber,
 		Department:         m.Department,
 		Division:           m.Division,
-		Docclass: 		 m.Docclass,
+		Docclass: 		 	m.Docclass,
 		UploaderName:       m.UploaderName,
 		UserID:             m.UserID,
+		Filepath: 			m.Filepath,
+		Folder: 			m.Foldername,
 	}
 }
 
@@ -79,7 +86,6 @@ func (m *Document) DocumentToResponse() *DocumentResponse {
 		ID: m.ID,
 		CreatedAt: time.Unix(m.CreatedAt, 0).String(),
 		Filename: m.FileName,
-		Folder: m.Folder,
 		DocumentType: m.DocumentType,
 		DocumentNumber: m.DocumentNumber,
 		Department: m.Department,

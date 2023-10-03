@@ -67,12 +67,12 @@ func ValidateAndGetClaims(tokenString string, secret string) (jwt.MapClaims, err
 }
 
 // GenerateToken generates only an access token
-func GenerateToken(email string, secret string) (string, error) {
+func GenerateToken(email string, secret string, isAdmin bool, id uint) (string, error) {
 	if secret == "" {
 		return "", errors.New("", http.StatusInternalServerError)
 	}
 	// Generate claims
-	claims := GenerateClaims(email)
+	claims := GenerateClaims(email, isAdmin, id)
 
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
@@ -86,10 +86,12 @@ func GenerateToken(email string, secret string) (string, error) {
 	return tokenString, nil
 }
 
-func GenerateClaims(email string) jwt.MapClaims {
+func GenerateClaims(email string, isAdmin bool, id uint) jwt.MapClaims {
 	accessClaims := jwt.MapClaims{
 		"email": email,
 		"exp":   time.Now().Add(AccessTokenValidity).Unix(),
+		"is_admin": isAdmin,
+		"id": id,
 	}
 	return accessClaims
 }

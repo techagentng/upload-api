@@ -21,6 +21,7 @@ type ErrorResponse struct {
 type DocumentRepository interface {
 	CreateDocument(document *models.Document) (*models.Document, error)
 	GetAllDocuments() ([]models.Document, *errors.Error)
+	GetDocumentByFolderName(folderName string) ([]models.Document, *errors.Error)
 	// GetAllDocuments() ([]models.DocumentResponse, *errors.Error)
 	// DeleteUserDocument(userID uint) ([]models.DocumentResponse, *errors.Error)
 	// UpdateDocument(request *models.UpdateDocumentRequest, documentID uint, userID uint) *errors.Error
@@ -45,6 +46,15 @@ func (m *documentRepo) CreateDocument(document *models.Document) (*models.Docume
     return document, nil
 }
 
+func (m *documentRepo) GetDocumentByFolderName(folderName string) ([]models.Document, *errors.Error) {
+	var documents []models.Document
+	if err := m.DB.Where("foldername = ?", folderName).Find(&documents).Error; err != nil {
+		log.Println("Failed to get document by foldername:", err)
+        return nil, errors.ErrInternalServerError	
+    }
+    return documents, nil
+}
+
 
 func (m *documentRepo) GetAllDocuments() ([]models.Document, *errors.Error) {
 	var documents []models.Document
@@ -54,7 +64,6 @@ func (m *documentRepo) GetAllDocuments() ([]models.Document, *errors.Error) {
 	}
 	return documents, nil
 }
-
 
 // func (m *medicationService) UpdateMedication(request *models.UpdateMedicationRequest, medicationID uint, userID uint) *errors.Error {
 // 	startDate, err := time.Parse(time.RFC3339, request.MedicationStartDate)
