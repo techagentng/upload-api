@@ -30,7 +30,7 @@ type Document struct {
 	DocumentUploadNumber string   `json:"document_upload_number"`
 	UploaderName       string    `json:"uploader_name"`
 	UserID             uint      `json:"user_id"`
-	User               User      `json:"user" gorm:"foreignKey:UserID"`
+	// User               User      `json:"user" gorm:"foreignKey:UserID"`
 	Folder       	   string      `json:"folder" gorm:"foreignKey:Foldername"`
 	Filepath           string    `json:"filepath"`
 }
@@ -76,7 +76,7 @@ func (m *DocumentRequest) ReqToDocumentModel() *Document {
 		UploaderName:       m.UploaderName,
 		UserID:             m.UserID,
 		Filepath: 			m.Filepath,
-		Folder: 			m.Foldername,
+		Folder: 		m.Foldername,
 	}
 }
 

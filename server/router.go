@@ -49,10 +49,10 @@ func (s *Server) defineRoutes(router *gin.Engine) {
 	authorized.GET("/users", s.handleGetUsers())
 	// authorized.DELETE("/users", s.handleDeleteUserByEmail())
 
-	authorized.DELETE("/folder/:file", s.handleDeleteFile())
+	authorized.DELETE("/folder/:file", s.handleDeleteDocument())
 	authorized.PUT("/me/update", s.handleUpdateUserDetails())
 	authorized.GET("/me", s.handleShowProfile())
-	authorized.GET("/document/:foldername", s.handleGetDocByFolderName())
+	apirouter.GET("/document/:foldername", s.handleGetDocByFolderName())
 	apirouter.DELETE("/documents/:folderName/:fileName", s.handleDeleteDocument())
 	apirouter.GET("/download/:filename", s.handleDownloadDocument())
 	authorized.DELETE("/delete/:folder/:fileName", s.handleDeleteDocument())

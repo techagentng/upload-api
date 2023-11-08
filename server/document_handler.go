@@ -247,55 +247,74 @@ func (s *Server) handleFindDocument() gin.HandlerFunc {
 	}
 }
 
+// func (s *Server) handleDeleteDocument() gin.HandlerFunc {
+// 	return func(c *gin.Context){
+//         log.Println("Delete document called")
+//         fmt.Println("Delete document called")
+
+//     folderName := c.Param("folderName")
+//     fileName := c.Param("fileName")
+
+//             // Decode the encoded file name
+//             encodedFileName := c.Param("fileName")
+//             fileName, err := url.QueryUnescape(encodedFileName)
+//             if err != nil {
+//                 c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid file name"})
+//                 return
+//             }
+            
+//     filePath := filepath.Join("./uploads", folderName, fileName)
+//     fmt.Println("Received delete request for folder:", folderName, "and filename:", fileName)
+
+//     err = os.Remove(filePath)
+
+//     if err != nil {
+//         c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete file"})
+//         return
+//     }
+    
+//     c.JSON(http.StatusOK, gin.H{"message": "File deleted successfullyxxx"})
+// 	}
+// }
+
 func (s *Server) handleDeleteDocument() gin.HandlerFunc {
-	return func(c *gin.Context){
-        log.Println("Delete document called")
-        fmt.Println("Delete document called")
+	return func(c *gin.Context) {
+		log.Println("Delete document called")
+		fileID := c.Param("id")
+		foldername := c.Param("folder")
+        
+        decodedFolderName, err := url.QueryUnescape(foldername)
+        if err != nil {
+            fmt.Println("Error decoding:", err)
+            return
+        }
+		filePath := filepath.Join("./uploads", decodedFolderName, fileID)
 
-    folderName := c.Param("folderName")
-    fileName := c.Param("fileName")
+		// Check if the file exists
+		_, err = os.Stat(filePath)
+		if os.IsNotExist(err) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+			return
+		}
 
-            // Decode the encoded file name
-            encodedFileName := c.Param("fileName")
-            fileName, err := url.QueryUnescape(encodedFileName)
-            if err != nil {
-                c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid file name"})
-                return
-            }
-            
-    filePath := filepath.Join("./uploads", folderName, fileName)
-    fmt.Println("Received delete request for folder:", folderName, "and filename:", fileName)
+		// Delete the file
+		err = os.Remove(filePath)
+		if err != nil {
+			log.Println("Failed to delete filexxx:", err)
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete file"})
+			return
+		}
 
-    err = os.Remove(filePath)
+		err = s.DocumentService.DeleteDocument(fileID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete document from the database"})
+			return
+		}
 
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete file"})
-        return
-    }
-    
-    c.JSON(http.StatusOK, gin.H{"message": "File deleted successfullyxxx"})
+		c.JSON(http.StatusOK, gin.H{"message": "File deleted successfully"})
 	}
 }
 
-func (s *Server) handleDeleteFile() gin.HandlerFunc {
-	return func(c *gin.Context){
-        log.Println("Delete document called")
-    folderName := c.Param("folderName")
-            
-    // filePath := filepath.Join("./uploads", folderName, fileName)
-    // fmt.Println("Received delete request for folder:", folderName, "and filename:", fileName)
-
-    // err = os.Remove(filePath)
-
-    err := s..DeleteFolder(folderName)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete folder"})
-		return
-	}
-    
-    c.JSON(http.StatusOK, gin.H{"message": "File deleted successfullyxxx"})
-	}
-}
 
 func (s *Server) handleGetAllDocuments() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -315,11 +334,11 @@ func (s *Server) handleGetAllDocuments() gin.HandlerFunc {
 
 func (s *Server) handleGetDocByFolderName() gin.HandlerFunc {
     return func(c *gin.Context) {
-        _, _, err := GetValuesFromContext(c)
-        if err != nil {
-        	err.Respond(c)
-        	return
-        }
+        // _, _, err := GetValuesFromContext(c)
+        // if err != nil {
+        // 	err.Respond(c)
+        // 	return
+        // }
         folderName := c.Param("foldername")
         allDocument, err := s.DocumentService.GetDocumentByFolderName(folderName)
         if err != nil {

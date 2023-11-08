@@ -7,5 +7,5 @@ type Folder struct {
     Foldername      string      `json:"foldername"`
     CreatedAt time.Time  `json:"created_at"`
     UpdatedAt time.Time  `json:"updated_at"`
-    Document Document   `json:"document" gorm:"foreignKey:Foldername"`
+    Document []Document   `json:"document" gorm:"foreignKey:id"`
 }

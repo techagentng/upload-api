@@ -22,6 +22,7 @@ type DocumentRepository interface {
 	CreateDocument(document *models.Document) (*models.Document, error)
 	GetAllDocuments() ([]models.Document, *errors.Error)
 	GetDocumentByFolderName(folderName string) ([]models.Document, *errors.Error)
+	DeleteDocument(id string) error
 	// GetAllDocuments() ([]models.DocumentResponse, *errors.Error)
 	// DeleteUserDocument(userID uint) ([]models.DocumentResponse, *errors.Error)
 	// UpdateDocument(request *models.UpdateDocumentRequest, documentID uint, userID uint) *errors.Error
@@ -37,7 +38,11 @@ func NewDocumentRepo(db *GormDB) DocumentRepository {
 }
 
 func (m *documentRepo) CreateDocument(document *models.Document) (*models.Document, error) {
-    if err := m.DB.Create(document).Error; err != nil {
+	folder := models.Folder{
+		Foldername: "NDPR",
+		Document: []models.Document{*document},
+	}
+    if err := m.DB.Create(&folder).Error; err != nil {
         log.Printf("Failed to create document: %v", err)
         return nil, fmt.Errorf("failed to create document: %v", err)
     }
@@ -48,11 +53,11 @@ func (m *documentRepo) CreateDocument(document *models.Document) (*models.Docume
 
 func (m *documentRepo) GetDocumentByFolderName(folderName string) ([]models.Document, *errors.Error) {
 	var documents []models.Document
-	if err := m.DB.Where("foldername = ?", folderName).Find(&documents).Error; err != nil {
-		log.Println("Failed to get document by foldername:", err)
-        return nil, errors.ErrInternalServerError	
-    }
-    return documents, nil
+	if err := m.DB.Where("folder = ?", folderName).Find(&documents).Error; err != nil {
+		log.Println("Failed to get document by folder name:", err)
+		return nil, errors.ErrInternalServerError
+	}
+	return documents, nil
 }
 
 
@@ -63,6 +68,15 @@ func (m *documentRepo) GetAllDocuments() ([]models.Document, *errors.Error) {
 		return nil, nil
 	}
 	return documents, nil
+}
+
+func  (m *documentRepo) DeleteDocument(id string) error {
+	var document models.Document
+	if err := m.DB.Where("id = ?", id).Delete(&document).Error; err != nil {
+		log.Println("Failed to delete document:", err)
+		return errors.ErrInternalServerError	
+	}
+	return nil
 }
 
 // func (m *medicationService) UpdateMedication(request *models.UpdateMedicationRequest, medicationID uint, userID uint) *errors.Error {
