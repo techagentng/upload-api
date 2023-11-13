@@ -1,4 +1,4 @@
-runtime: golang:1.17
+runtime: go117
 env: flex
 
 manual_scaling:
