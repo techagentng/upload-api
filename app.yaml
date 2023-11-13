@@ -1,4 +1,4 @@
-runtime: go114
+runtime: go112
 env: flex
 
 manual_scaling:
