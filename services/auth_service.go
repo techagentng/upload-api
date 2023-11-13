@@ -128,7 +128,7 @@ func (a *authService) LoginUser(loginRequest *models.LoginRequest) (*models.Logi
 	}
 
 
-	accessToken, err := jwt.GenerateToken(foundUser.Email, a.Config.JWTSecret)
+	accessToken, err := jwt.GenerateToken(foundUser.Email, a.Config.JWTSecret, foundUser.IsAdmin, foundUser.ID)
 	if err != nil {
 		log.Printf("error generating token %s", err)
 		return nil, apiError.ErrInternalServerError

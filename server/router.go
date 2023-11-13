@@ -26,6 +26,8 @@ func (s *Server) defineRoutes(router *gin.Engine) {
 
 	// folderListHandler endpoint
 	apirouter.GET("/folders/:folderName/filelist", s.handleGetFolderList())
+	// apirouter.GET("/files/:folderName", s.handleGetFolderList())
+
 	// Download endpoint
 	// apirouter.GET("/download/:filename", s.handleDownloadDocument())
 	
@@ -46,12 +48,14 @@ func (s *Server) defineRoutes(router *gin.Engine) {
 	authorized.GET("/logout", s.handleLogout())
 	authorized.GET("/users", s.handleGetUsers())
 	// authorized.DELETE("/users", s.handleDeleteUserByEmail())
+
+	authorized.DELETE("/folder/:file", s.handleDeleteDocument())
 	authorized.PUT("/me/update", s.handleUpdateUserDetails())
 	authorized.GET("/me", s.handleShowProfile())
+	apirouter.GET("/document/:foldername", s.handleGetDocByFolderName())
 	apirouter.DELETE("/documents/:folderName/:fileName", s.handleDeleteDocument())
 	apirouter.GET("/download/:filename", s.handleDownloadDocument())
 	authorized.DELETE("/delete/:folder/:fileName", s.handleDeleteDocument())
-
 	// authorized.POST("/user/medications", s.handleCreateMedication())
 	// authorized.GET("/user/medications/:id", s.handleGetMedDetail())
 	apirouter.GET("/documents", s.handleGetAllDocuments())

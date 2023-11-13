@@ -26,6 +26,7 @@ type User struct {
 	IsEmailActive  bool   `json:"-"`
 	Social         string `json:"-"`
 	AccessToken    string `json:"-"`
+	IsAdmin        bool `json:"is_admin"`
 }
 
 // func ValidateStruct(req interface{}) []error {

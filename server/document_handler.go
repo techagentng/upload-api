@@ -9,8 +9,6 @@ import (
 	"math/rand"
 	_ "math/rand"
 	"mime/multipart"
-
-	// "mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,7 +16,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	_ "github.com/google/uuid"
 	_ "routepayfs.com/upload/errors"
 	"routepayfs.com/upload/models"
@@ -51,13 +49,7 @@ var folderMap = map[string]uint{
     "Information security management": 9,
 	// Add more folder mappings as needed
 }
-// func getFolderID(folderName string) (uint, error) {
-// 	folderID, ok := folderMap[folderName]
-// 	if !ok {
-// 		return 0, fmt.Errorf("folder not found")
-// 	}
-// 	return folderID, nil
-// }
+
 func saveUploadedFile(c *gin.Context, fileHeader *multipart.FileHeader, folderPath string) error {
     dst := filepath.Join(folderPath, fileHeader.Filename)
 
@@ -76,34 +68,44 @@ func saveUploadedFile(c *gin.Context, fileHeader *multipart.FileHeader, folderPa
 
     return nil
 }
+func generateCustomID() string {
+    id := uuid.New().String()
+    return id
+}
+
 func (s *Server) handleFileUpload() gin.HandlerFunc {
     return func(c *gin.Context) {
         var uploadRequest models.DocumentRequest
+        
     		_, user, err := GetValuesFromContext(c)
 		if err != nil {
 			err.Respond(c)
 			return
 		}
+
 		uploadRequestUserId := user.ID
         UploaderName := user.Name
         
         uploadRequest.Filename = c.PostForm("filename")
         uploadRequest.DocumentType = c.PostForm("doctype")
-        uploadRequest.Folder= c.PostForm("folder")
+        uploadRequest.Foldername= c.PostForm("folder")
         uploadRequest.DocumentNumber= concatenateString(c.PostForm("doctype"))
         uploadRequest.Department = c.PostForm("department")
         uploadRequest.Division = c.PostForm("division")
         uploadRequest.Docclass = c.PostForm("docclass")
         uploadRequest.UserID = uploadRequestUserId
         uploadRequest.UploaderName = UploaderName
-    
-           // Validate the request datavalidate
-           v := validator.New()
-           if err := v.Struct(uploadRequest); err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-            return
-        }
-        selectedFolder := uploadRequest.Folder
+        selectedFolder := uploadRequest.Foldername
+        filelocation := uploadRequest.Filepath
+			// fileID := generateCustomID()    
+
+    	
+        //    // Validate the request datavalidate
+        //    v := validator.New()
+        //    if err := v.Struct(uploadRequest); err != nil {
+        //     c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        //     return
+        // }
 
         if selectedFolder == "" {
             c.JSON(http.StatusBadRequest, ErrorResponse{Error: "No folder selected"})
@@ -111,6 +113,7 @@ func (s *Server) handleFileUpload() gin.HandlerFunc {
         }
 
         folderPath := filepath.Join("./uploads", selectedFolder)
+        // pathToDb := filepath.Join(selectedFolder, uploadRequest.Filename)
 
         if err := os.MkdirAll(folderPath, 0755); err != nil {
             fmt.Println("Error creating subdirectory:", err)
@@ -133,17 +136,17 @@ func (s *Server) handleFileUpload() gin.HandlerFunc {
             defer file.Close()
            
             // Use the original filename as the destination filename
-            filePath := filepath.Join(folderPath, fileHeader.Filename)
+            filelocation := filepath.Join(folderPath, fileHeader.Filename)
         
             // Save the uploaded file to the specified folder
-            if err := c.SaveUploadedFile(fileHeader, filePath); err != nil {
+            if err := c.SaveUploadedFile(fileHeader, filelocation); err != nil {
                 fmt.Println("Error saving file:", err)
                 c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to save uploaded file"})
                 return
             }
         }
-           
-            createDocument, err := s.DocumentService.CreateDocument(&uploadRequest)
+           log.Println("File uploaded successfully", filelocation)
+            createDocument, err := s.DocumentService.CreateDocument(&uploadRequest, selectedFolder, filelocation)
             if err != nil {
                 fmt.Println("Error creating document:", err)
                 c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to parse service"})
@@ -152,6 +155,10 @@ func (s *Server) handleFileUpload() gin.HandlerFunc {
 
         response.JSON(c, "document created successfully", http.StatusCreated, createDocument, nil)
     }
+}
+
+func generateCustomFolderID() {
+	panic("unimplemented")
 }
 
 func generateRandomNumbers(length int) string {
@@ -180,8 +187,8 @@ func concatenateString(input string) string {
 
 func (s *Server) handleDownloadDocument() gin.HandlerFunc {
 	return func(c *gin.Context){
-        filename := c.Param("filename")
-        filepath := filepath.Join("uploads", filename)
+        foldername := c.Param("folder")
+        filepath := filepath.Join("uploads", foldername)
         _, err := os.Stat(filepath)
         if os.IsNotExist(err) {
             c.JSON(http.StatusNotFound, ErrorResponse{Error: "File not found"})
@@ -240,35 +247,74 @@ func (s *Server) handleFindDocument() gin.HandlerFunc {
 	}
 }
 
-func (s *Server) handleDeleteDocument() gin.HandlerFunc {
-	return func(c *gin.Context){
-        log.Println("Delete document called")
-        fmt.Println("Delete document called")
+// func (s *Server) handleDeleteDocument() gin.HandlerFunc {
+// 	return func(c *gin.Context){
+//         log.Println("Delete document called")
+//         fmt.Println("Delete document called")
 
-    folderName := c.Param("folderName")
-    fileName := c.Param("fileName")
+//     folderName := c.Param("folderName")
+//     fileName := c.Param("fileName")
 
-            // Decode the encoded file name
-            encodedFileName := c.Param("fileName")
-            fileName, err := url.QueryUnescape(encodedFileName)
-            if err != nil {
-                c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid file name"})
-                return
-            }
+//             // Decode the encoded file name
+//             encodedFileName := c.Param("fileName")
+//             fileName, err := url.QueryUnescape(encodedFileName)
+//             if err != nil {
+//                 c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid file name"})
+//                 return
+//             }
             
-    filePath := filepath.Join("./uploads", folderName, fileName)
-    fmt.Println("Received delete request for folder:", folderName, "and filename:", fileName)
+//     filePath := filepath.Join("./uploads", folderName, fileName)
+//     fmt.Println("Received delete request for folder:", folderName, "and filename:", fileName)
 
-    err = os.Remove(filePath)
+//     err = os.Remove(filePath)
 
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete file"})
-        return
-    }
+//     if err != nil {
+//         c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete file"})
+//         return
+//     }
     
-    c.JSON(http.StatusOK, gin.H{"message": "File deleted successfullyxxx"})
+//     c.JSON(http.StatusOK, gin.H{"message": "File deleted successfullyxxx"})
+// 	}
+// }
+
+func (s *Server) handleDeleteDocument() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		log.Println("Delete document called")
+		fileID := c.Param("id")
+		foldername := c.Param("folder")
+        
+        decodedFolderName, err := url.QueryUnescape(foldername)
+        if err != nil {
+            fmt.Println("Error decoding:", err)
+            return
+        }
+		filePath := filepath.Join("./uploads", decodedFolderName, fileID)
+
+		// Check if the file exists
+		_, err = os.Stat(filePath)
+		if os.IsNotExist(err) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+			return
+		}
+
+		// Delete the file
+		err = os.Remove(filePath)
+		if err != nil {
+			log.Println("Failed to delete filexxx:", err)
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete file"})
+			return
+		}
+
+		err = s.DocumentService.DeleteDocument(fileID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete document from the database"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "File deleted successfully"})
 	}
 }
+
 
 func (s *Server) handleGetAllDocuments() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -285,6 +331,24 @@ func (s *Server) handleGetAllDocuments() gin.HandlerFunc {
 		response.JSON(c, "documents retrieved successfully", http.StatusOK, allDocument, nil)
 	}
 }
+
+func (s *Server) handleGetDocByFolderName() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        // _, _, err := GetValuesFromContext(c)
+        // if err != nil {
+        // 	err.Respond(c)
+        // 	return
+        // }
+        folderName := c.Param("foldername")
+        allDocument, err := s.DocumentService.GetDocumentByFolderName(folderName)
+        if err != nil {
+            err.Respond(c)
+            return
+        }
+        response.JSON(c, "documents retrieved successfully", http.StatusOK, allDocument, nil)
+    }
+}
+
 func (s *Server) handleEditDocument() gin.HandlerFunc {
 	return func(c *gin.Context){
 
