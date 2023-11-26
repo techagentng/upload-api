@@ -1,9 +1,13 @@
 package config
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"os"
 
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -45,5 +49,39 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if c.Env == "prod" {
+		// Fetch secret from Secret Manager
+		secretValue, err := getSecret("projects/routepay/secrets/routepay-secret/versions/latest")
+		if err != nil {
+			return nil, err
+		}
+
+		// Set the sensitive value
+		c.PostgresPassword = secretValue
+	}
+
 	return c, nil
+}
+
+func getSecret(secretName string) (string, error) {
+	ctx := context.Background()
+
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer client.Close()
+
+	secretVersion := "latest"
+	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: fmt.Sprintf("%s/versions/%s", secretName, secretVersion),
+	}
+
+	result, err := client.AccessSecretVersion(ctx, accessRequest)
+	if err != nil {
+		return "", err
+	}
+
+	return string(result.Payload.Data), nil
 }
