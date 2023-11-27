@@ -19,7 +19,7 @@ import (
 type User struct {
 	Model
 	Name           string `json:"name" binding:"required,min=2"`
-	Telephone      string `json:"telephone" gorm:"unique;default:null" binding:"required,e164"`
+	Telephone string `json:"telephone" gorm:"unique;default:null" binding:"required"`
 	Email          string `json:"email" gorm:"unique;not null" binding:"required,email"`
 	Password       string `json:"password,omitempty" gorm:"-" binding:"required,min=8,max=15"`
 	HashedPassword string `json:"-" gorm:"password"`
